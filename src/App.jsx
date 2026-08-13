@@ -114,7 +114,6 @@ function App() {
 						<p className="eyebrow">Multi-cache complete</p>
 						<h1 id="success-title">Congratulations!</h1>
 						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 							Multi-cache completed successfully.
 						</p>
 					</section>
