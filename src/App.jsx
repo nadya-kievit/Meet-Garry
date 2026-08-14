@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ValidationError, useForm } from '@formspree/react'
 import CacheProgress from './components/CacheProgress.jsx'
 import Quiz from './components/Quiz.jsx'
 import './App.css'
@@ -19,7 +20,7 @@ const caches = [
 		description: 'Follow the coordinates to your next stop. Once you arrive, explore the area and look for the information you’ll need to unlock the next cache.',
 		question: 'How many trunks are on the Garry Oak next to you?',
 		answers: ['1', '3', '4', '7', 'Trick question! There is no Garry Oak'],
-		answerIcons: ['sprout', 'sprout', 'sprout', 'sprout', 'x'],
+		answerIcons: ['tree', 'tree', 'tree', 'tree', 'x'],
 		correctAnswer: '4',
 	},
 	{
@@ -84,8 +85,36 @@ function LearnMoreIcon() {
 	)
 }
 
+function FeedbackIcon() {
+	return (
+		<svg viewBox="0 0 24 24" aria-hidden="true">
+			<path d="M20 15a4 4 0 0 1-4 4H9l-5 3v-7a4 4 0 0 1-1-2.7V8a4 4 0 0 1 4-4h9a4 4 0 0 1 4 4v7Z" />
+			<path d="M8 11h.01M12 11h.01M16 11h.01" />
+		</svg>
+	)
+}
+
+function SendIcon() {
+	return (
+		<svg viewBox="0 0 24 24" aria-hidden="true">
+			<path d="m21 3-7.5 18-3.2-7.3L3 10.5 21 3Z" />
+			<path d="m10.3 13.7 4.2-4.2" />
+		</svg>
+	)
+}
+
 function App() {
+	const [feedbackState, submitFeedback] = useForm(
+		import.meta.env.VITE_FORMSPREE_FORM_ID,
+	)
+	const feedbackFormRef = useRef(null)
 	const [stage, setStage] = useState('landing')
+
+	useEffect(() => {
+		if (feedbackState.succeeded) {
+			feedbackFormRef.current?.reset()
+		}
+	}, [feedbackState.succeeded])
 
 	const isCacheStage = stage.startsWith('cache')
 	const cacheNumber = isCacheStage ? Number(stage.slice('cache'.length)) : null
@@ -112,7 +141,7 @@ function App() {
 	}
 
 	return (
-		<main className={`site-shell ${isCacheStage ? 'site-shell--top' : ''}`}>
+		<main className={`site-shell ${isCacheStage || stage === 'success' ? 'site-shell--top' : ''}`}>
 			<div className="card">
 				{stage === 'landing' && (
 					<section className="landing-page" aria-labelledby="landing-title">
@@ -208,19 +237,56 @@ function App() {
 				)}
 
 				{stage === 'success' && (
-					<section aria-labelledby="success-title">
-						<div className="cache-navigation">
-							<button className="back-button" onClick={handleBack} aria-label="Go back">
-								<BackIcon />
-							</button>
-							<CacheProgress current={caches.length} total={caches.length} />
-							<span aria-hidden="true" />
+					<section className="success-page" aria-labelledby="success-title">
+						<button className="back-button success-back-button" onClick={handleBack} aria-label="Go back">
+							<BackIcon />
+						</button>
+						<div className="success-hero">
+							<img className="success-illustration" src="/success-icon.png" alt="" />
+							<h1 id="success-title">Congratulations!</h1>
+							<p>
+								You completed all three caches at Cattle Point. Thanks for exploring a small part of the Garry Oak ecosystem.
+							</p>
 						</div>
-						<h1 id="success-title">Congratulations!</h1>
-						<p>
-							Goodbye message with call to action...
-						</p>
-						<button className="learn-more-button" onClick={() => {window.location.href = 'https://goert.ca/about/what-are-geo/'}}>
+						<form ref={feedbackFormRef} className="success-feedback-card" onSubmit={submitFeedback}>
+							<div className="success-feedback-heading">
+								<FeedbackIcon />
+								<h2>Share your experience</h2>
+							</div>
+
+							<textarea
+								aria-label="Share your experience"
+								name="message"
+								placeholder="What did you enjoy? Any feedback for us?"
+								disabled={feedbackState.submitting}
+								required
+							/>
+
+							<ValidationError
+								className="feedback feedback-error"
+								field="message"
+								prefix="Feedback"
+								errors={feedbackState.errors}
+							/>
+
+							{feedbackState.succeeded ? (
+								<p className="feedback feedback-success" role="status">
+									Thanks for the feedback!
+								</p>
+							) : (
+								<button
+									className="send-feedback-button"
+									type="submit"
+									disabled={feedbackState.submitting}
+								>
+									<span>
+										{feedbackState.submitting ? 'Sending…' : 'Send Feedback'}
+									</span>
+									<SendIcon />
+								</button>
+							)}
+						</form>
+						<button className="learn-more-button" onClick={() => {window.open('https://goert.ca/about/what-are-geo/', '_blank', 'noopener,noreferrer')}}>
 							<span className="learn-more-icon"><LearnMoreIcon /></span>
 							<span>Learn more about the Garry Oak ecosystem</span>
 							<span className="learn-more-arrow" aria-hidden="true">↗</span>
