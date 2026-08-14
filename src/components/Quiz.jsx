@@ -1,4 +1,12 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
+
+function ChevronIcon() {
+	return (
+		<svg className="quiz-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+			<path d="m6 9 6 6 6-6" />
+		</svg>
+	)
+}
 
 function AnswerIcon({ name }) {
 	return (
@@ -86,11 +94,16 @@ function AnswerIcon({ name }) {
 function Quiz({ question, answers, answerIcons, correctAnswer, continueLabel, onContinue }) {
 	const [feedback, setFeedback] = useState('')
 	const [isCorrect, setIsCorrect] = useState(false)
+	const [isExpanded, setIsExpanded] = useState(false)
+	const [isReviewing, setIsReviewing] = useState(false)
+	const quizPanelId = useId()
+	const isShowingQuestion = !isCorrect || isReviewing
 
 	const checkAnswer = (answer) => {
 		if (answer === correctAnswer) {
 			setFeedback('')
 			setIsCorrect(true)
+			setIsReviewing(false)
 			return
 		}
 
@@ -98,49 +111,78 @@ function Quiz({ question, answers, answerIcons, correctAnswer, continueLabel, on
 	}
 
 	return (
-		<div className="quiz">
-			<div className="quiz-content">
-				<div
-					className={`quiz-question-view ${isCorrect ? 'quiz-view--hidden' : ''}`}
-					aria-hidden={isCorrect}
-				>
-					<h2>{question}</h2>
-					<div className="answer-list" aria-label="Answer choices">
-						{answers.map((answer, index) => (
+		<div className={`quiz ${isExpanded ? 'quiz--expanded' : ''}`}>
+			<button
+				className="quiz-toggle"
+				type="button"
+				aria-controls={quizPanelId}
+				aria-expanded={isExpanded}
+				onClick={() => setIsExpanded((expanded) => !expanded)}
+			>
+				<span>{isExpanded ? 'Hide Quiz' : 'View Quiz'}</span>
+				<ChevronIcon />
+			</button>
+
+			<div className="quiz-collapsible" id={quizPanelId} hidden={!isExpanded}>
+				<div className="quiz-content">
+					<div
+						className={`quiz-question-view ${!isShowingQuestion ? 'quiz-view--hidden' : ''}`}
+						aria-hidden={!isShowingQuestion}
+					>
+						<h2>{question}</h2>
+						<div className="answer-list" aria-label="Answer choices">
+							{answers.map((answer, index) => (
+								<button
+									className={`answer-button ${isCorrect && answer === correctAnswer ? 'answer-button--correct' : ''}`}
+									disabled={isCorrect}
+									key={answer}
+									onClick={() => checkAnswer(answer)}
+									type="button"
+								>
+									<AnswerIcon name={answerIcons[index]} />
+									<span>{answer}</span>
+								</button>
+							))}
+						</div>
+
+						{feedback && (
+							<p className="feedback feedback-error" role="status">
+								{feedback}
+							</p>
+						)}
+
+						{isReviewing && (
 							<button
-								className="answer-button"
-								disabled={isCorrect}
-								key={answer}
-								onClick={() => checkAnswer(answer)}
+								className="quiz-review-button"
 								type="button"
+								onClick={() => setIsReviewing(false)}
 							>
-								<AnswerIcon name={answerIcons[index]} />
-								<span>{answer}</span>
+								Back to result
 							</button>
-						))}
+						)}
 					</div>
 
-					{feedback && (
-						<p className="feedback feedback-error" role="status">
-							{feedback}
-						</p>
-					)}
-				</div>
-
-				<div
-					className={`quiz-success-view ${!isCorrect ? 'quiz-view--hidden' : ''}`}
-					aria-hidden={!isCorrect}
-				>
-					<div className="correct-icon" aria-hidden="true">
-						<svg viewBox="0 0 24 24">
-							<path d="m6.5 12.5 3.5 3.5 7.5-8" />
-						</svg>
+					<div
+						className={`quiz-success-view ${isShowingQuestion ? 'quiz-view--hidden' : ''}`}
+						aria-hidden={isShowingQuestion}
+					>
+						<div className="correct-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24">
+								<path d="m6.5 12.5 3.5 3.5 7.5-8" />
+							</svg>
+						</div>
+						<h2>Correct!</h2>
+						<button className="primary-button" onClick={onContinue}>
+							{continueLabel}
+						</button>
+						<button
+							className="quiz-review-button"
+							type="button"
+							onClick={() => setIsReviewing(true)}
+						>
+							Review quiz
+						</button>
 					</div>
-					<h2>Correct!</h2>
-					<p>Great job! You&apos;re one step closer to the final cache.</p>
-					<button className="primary-button" onClick={onContinue}>
-						{continueLabel}
-					</button>
 				</div>
 			</div>
 		</div>
