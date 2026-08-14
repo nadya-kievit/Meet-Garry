@@ -89,7 +89,7 @@ function Quiz({ question, answers, answerIcons, correctAnswer, continueLabel, on
 
 	const checkAnswer = (answer) => {
 		if (answer === correctAnswer) {
-			setFeedback('Correct! You may continue.')
+			setFeedback('')
 			setIsCorrect(true)
 			return
 		}
@@ -99,36 +99,50 @@ function Quiz({ question, answers, answerIcons, correctAnswer, continueLabel, on
 
 	return (
 		<div className="quiz">
-			<h2>{question}</h2>
-			<div className="answer-list" aria-label="Answer choices">
-				{answers.map((answer, index) => (
-					<button
-						className="answer-button"
-						disabled={isCorrect}
-						key={answer}
-						onClick={() => checkAnswer(answer)}
-						type="button"
-					>
-						<AnswerIcon name={answerIcons[index]} />
-						<span>{answer}</span>
-					</button>
-				))}
-			</div>
-
-			{feedback && (
-				<p
-					className={`feedback ${isCorrect ? 'feedback-success' : 'feedback-error'}`}
-					role="status"
+			<div className="quiz-content">
+				<div
+					className={`quiz-question-view ${isCorrect ? 'quiz-view--hidden' : ''}`}
+					aria-hidden={isCorrect}
 				>
-					{feedback}
-				</p>
-			)}
+					<h2>{question}</h2>
+					<div className="answer-list" aria-label="Answer choices">
+						{answers.map((answer, index) => (
+							<button
+								className="answer-button"
+								disabled={isCorrect}
+								key={answer}
+								onClick={() => checkAnswer(answer)}
+								type="button"
+							>
+								<AnswerIcon name={answerIcons[index]} />
+								<span>{answer}</span>
+							</button>
+						))}
+					</div>
 
-			{isCorrect && (
-				<button className="primary-button" onClick={onContinue}>
-					{continueLabel}
-				</button>
-			)}
+					{feedback && (
+						<p className="feedback feedback-error" role="status">
+							{feedback}
+						</p>
+					)}
+				</div>
+
+				<div
+					className={`quiz-success-view ${!isCorrect ? 'quiz-view--hidden' : ''}`}
+					aria-hidden={!isCorrect}
+				>
+					<div className="correct-icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24">
+							<path d="m6.5 12.5 3.5 3.5 7.5-8" />
+						</svg>
+					</div>
+					<h2>Correct!</h2>
+					<p>Great job! You&apos;re one step closer to the final cache.</p>
+					<button className="primary-button" onClick={onContinue}>
+						{continueLabel}
+					</button>
+				</div>
+			</div>
 		</div>
 	)
 }
